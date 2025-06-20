@@ -7,6 +7,7 @@ import App from "./App.jsx";
 import Header from "./components/custom/Header.jsx";
 import CreateTrip from "./create-trip/index.jsx";
 import Hero from "./components/custom/Hero.jsx";
+import FirebaseStatus from "./components/FirebaseStatus.jsx";
 import { Toaster } from "./components/ui/ui/sonner.jsx";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -32,14 +33,21 @@ const router = createBrowserRouter([
       </>
     ),
   },
+  {
+    path: "/firebase-status",
+    element: (
+      <>
+        <Header />
+        <FirebaseStatus />
+      </>
+    ),
+  },
 ]);
 
 // Render the app with routing and toast support
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <Header />
-      <App />
       <RouterProvider router={router} />
       <Toaster />
     </GoogleOAuthProvider>
