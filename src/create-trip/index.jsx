@@ -14,13 +14,22 @@ import {
   DialogTitle,
   DialogDescription,
 } from "../components/ui/ui/dialog";
+
 import {
   SelectBudgetOptions,
   SelectTravellersList,
 } from "../constants/options";
 import chatSession from "../service/AIModal";
+import { useNavigate } from "react-router-dom";
 import { db } from "../service/firebaseConfig";
-import { collection, addDoc, doc, setDoc, serverTimestamp, getDocs } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  doc,
+  setDoc,
+  serverTimestamp,
+  getDocs,
+} from "firebase/firestore";
 
 const CreateTrip = () => {
   const [formData, setFormData] = useState({
@@ -32,12 +41,13 @@ const CreateTrip = () => {
   const [loading, setLoading] = useState(false);
   const [tripData, setTripData] = useState(null);
   const [error, setError] = useState(null);
-  const [openDialog, setOpenDialog] = useState(false);  const [user, setUser] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
-  const [authLoading, setAuthLoading] = useState(false);
-  const [debugMode, setDebugMode] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);  const [debugMode, setDebugMode] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null); // Track save status
-
+  const [savedTripId, setSavedTripId] = useState(null); // Store saved trip ID
+  const navigate = useNavigate();
   // Check for existing user on component mount
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -48,15 +58,9 @@ const CreateTrip = () => {
     if (savedProfile) {
       setUserProfile(JSON.parse(savedProfile));
     }
-  }, []);
-  // Fetch user profile from Google
+  }, []);  // Fetch user profile from Google
   const fetchUserProfile = async (accessToken) => {
     try {
-      console.log(
-        "Fetching user profile with token:",
-        accessToken.substring(0, 20) + "..."
-      );
-
       const response = await axios.get(
         `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${accessToken}`,
         {
@@ -67,7 +71,6 @@ const CreateTrip = () => {
         }
       );
 
-      console.log("Profile API Response:", response.data);
       const profile = response.data;
       setUserProfile(profile);
       localStorage.setItem("userProfile", JSON.stringify(profile));
@@ -85,9 +88,8 @@ const CreateTrip = () => {
       ...prevData,
       [name]: value,
     }));
-  };
-  useEffect(() => {
-    console.log("Form Data Updated:", formData);
+  };  useEffect(() => {
+    // Form data updated
   }, [formData]);
   const login = useGoogleLogin({
     onSuccess: async (codeResp) => {
@@ -98,9 +100,7 @@ const CreateTrip = () => {
         // Validate the response
         if (!codeResp.access_token) {
           throw new Error("No access token received from Google");
-        }
-
-        // Store user information in localStorage
+        }        // Store user information in localStorage
         const userInfo = {
           access_token: codeResp.access_token,
           token_type: codeResp.token_type || "Bearer",
@@ -114,16 +114,12 @@ const CreateTrip = () => {
           ).toISOString(),
         };
 
-        console.log("Storing user info:", userInfo);
         localStorage.setItem("user", JSON.stringify(userInfo));
         setUser(userInfo);
 
         // Fetch user profile
-        console.log("Attempting to fetch user profile...");
         const profile = await fetchUserProfile(codeResp.access_token);
-        if (profile) {
-          console.log("User Profile successfully fetched:", profile);
-        } else {
+        if (!profile) {
           console.warn("Profile fetch failed, but login will continue");
         }
 
@@ -187,7 +183,7 @@ const CreateTrip = () => {
     setUserProfile(null);
     setTripData(null);
     alert("Logged out successfully!");
-  };  // Check if token is expired
+  }; // Check if token is expired
   const isTokenExpired = () => {
     if (!user || !user.expiresAt) return true;
     return new Date() > new Date(user.expiresAt);
@@ -196,13 +192,15 @@ const CreateTrip = () => {
   // Helper function to sanitize data for Firebase (remove functions, undefined values, etc.)
   const sanitizeForFirebase = (obj) => {
     if (obj === null || obj === undefined) return null;
-    if (typeof obj === 'function') return null; // Remove functions
-    if (typeof obj === 'symbol') return null; // Remove symbols
+    if (typeof obj === "function") return null; // Remove functions
+    if (typeof obj === "symbol") return null; // Remove symbols
     if (obj instanceof Date) return obj; // Keep dates
     if (Array.isArray(obj)) {
-      return obj.map(item => sanitizeForFirebase(item)).filter(item => item !== null);
+      return obj
+        .map((item) => sanitizeForFirebase(item))
+        .filter((item) => item !== null);
     }
-    if (typeof obj === 'object') {
+    if (typeof obj === "object") {
       const sanitized = {};
       for (const [key, value] of Object.entries(obj)) {
         const cleanValue = sanitizeForFirebase(value);
@@ -218,62 +216,66 @@ const CreateTrip = () => {
   const saveTripToFirebase = async (tripData) => {
     try {
       if (!user || !userProfile) {
-        console.error("User not authenticated or profile not loaded");
-        return null;
+        console.error("User not authenticated or profile not loaded");        return null;
       }
 
-      // Debug: Log the form data to see what we're working with
-      console.log("Form data before save:", {
-        location: formData.location,
-        days: formData.days,
-        budget: formData.budget,
-        traveller: formData.traveller
-      });
-      console.log("User profile:", userProfile);
-      console.log("Trip data:", tripData);
-
-      const tripDocument = {        // Trip metadata
+      const tripDocument = {
+        // Trip metadata
         id: `trip_${Date.now()}`,
-        userId: userProfile?.id || user?.access_token?.substring(0, 10) || 'anonymous',
-        userEmail: userProfile?.email || 'unknown@email.com',
-        userName: userProfile?.name || 'Anonymous User',
-          // Trip details from form
+        userId:
+          userProfile?.id ||
+          user?.access_token?.substring(0, 10) ||
+          "anonymous",
+        userEmail: userProfile?.email || "unknown@email.com",
+        userName: userProfile?.name || "Anonymous User",
+        // Trip details from form
         destination: {
-          name: formData.location?.name || formData.location?.formatted_address || 'Unknown Destination',
-          address: formData.location?.formatted_address || '',
-          ...(formData.location?.place_id && { placeId: formData.location.place_id }),
+          name:
+            formData.location?.name ||
+            formData.location?.formatted_address ||
+            "Unknown Destination",
+          address: formData.location?.formatted_address || "",
+          ...(formData.location?.place_id && {
+            placeId: formData.location.place_id,
+          }),
         },
-        duration: parseInt(formData.days) || 1,        budget: {
-          type: formData.budget?.title || 'Budget',
-          description: formData.budget?.desc || '',
+        duration: parseInt(formData.days) || 1,
+        budget: {
+          type: formData.budget?.title || "Budget",
+          description: formData.budget?.desc || "",
           // Remove icon field completely as it contains React components
         },
         travelers: {
-          type: formData.traveller?.title || 'Solo',
-          count: formData.traveller?.people || '1',
-          description: formData.traveller?.desc || '',
+          type: formData.traveller?.title || "Solo",
+          count: formData.traveller?.people || "1",
+          description: formData.traveller?.desc || "",
           // Remove icon field completely as it contains React components
         },
-          // AI generated data
+        // AI generated data
         aiResponse: tripData || {},
         hotels: Array.isArray(tripData?.hotels) ? tripData.hotels : [],
         itinerary: Array.isArray(tripData?.itinerary) ? tripData.itinerary : [],
-        
+
         // Additional metadata
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        status: 'active',
-        version: '1.0',
+        status: "active",
+        version: "1.0",
         tags: [
-          (formData.budget?.title || 'budget').toLowerCase().replace(/\s+/g, '-'),
-          (formData.traveller?.title || 'solo').toLowerCase().replace(/\s+/g, '-'),
-          `${formData.days || '1'}-days`,
+          (formData.budget?.title || "budget")
+            .toLowerCase()
+            .replace(/\s+/g, "-"),
+          (formData.traveller?.title || "solo")
+            .toLowerCase()
+            .replace(/\s+/g, "-"),
+          `${formData.days || "1"}-days`,
         ].filter(Boolean),
-      };      // Save to Firestore
-      const sanitizedTripDocument = sanitizeForFirebase(tripDocument);
-      const docRef = await addDoc(collection(db, 'trips'), sanitizedTripDocument);
-      console.log("Trip saved to Firebase with ID:", docRef.id);
-      
+      }; // Save to Firestore
+      const sanitizedTripDocument = sanitizeForFirebase(tripDocument);      const docRef = await addDoc(
+        collection(db, "trips"),
+        sanitizedTripDocument
+      );
+
       // Also save to user's trips collection for easier querying
       const userTripData = sanitizeForFirebase({
         tripId: docRef.id,
@@ -283,35 +285,39 @@ const CreateTrip = () => {
         createdAt: serverTimestamp(),
       });
 
-      await setDoc(doc(db, 'users', tripDocument.userId, 'trips', docRef.id), userTripData);
-
+      await setDoc(
+        doc(db, "users", tripDocument.userId, "trips", docRef.id),
+        userTripData
+      );
+      // Navigate to the trip view page
       return {
         id: docRef.id,
         success: true,
-        message: "Trip saved successfully!"
-      };} catch (error) {
+        message: "Trip saved successfully!",
+      };
+      navigate("/view-trip/" + docRef.id);
+    } catch (error) {
       console.error("Error saving trip to Firebase:", error);
       return {
         success: false,
-        error: error.message
-      };
-    }
+        error: error.message,
+      };    }
   };
 
   // Test Firebase connection
   const testFirebaseConnection = async () => {
     try {
       setSaveStatus("saving");
-      console.log("Testing Firebase connection...");
-      
+
       // Try to read from a collection
-      const testCollection = collection(db, 'trips');
+      const testCollection = collection(db, "trips");
       const snapshot = await getDocs(testCollection);
-      
-      console.log(`Firebase connection successful! Found ${snapshot.size} trips in database.`);
+
       setSaveStatus("success");
-      alert(`Firebase connection successful! Found ${snapshot.size} existing trips.`);
-      
+      alert(
+        `Firebase connection successful! Found ${snapshot.size} existing trips.`
+      );
+
       return true;
     } catch (error) {
       console.error("Firebase connection failed:", error);
@@ -339,10 +345,10 @@ const CreateTrip = () => {
     if (!formData?.location || !formData?.budget || !formData?.traveller) {
       alert("Please fill all the fields");
       return;
-    }
-
-    setLoading(true);
+    }    setLoading(true);
     setError(null);
+    setSaveStatus(null); // Reset save status
+    setSavedTripId(null); // Reset saved trip ID
 
     try {
       console.log("Final Form Data", formData);
@@ -393,21 +399,29 @@ const CreateTrip = () => {
           cleanedResponse = cleanedResponse.substring(0, lastBrace + 1);
         }
 
-        console.log("Cleaned Response:", cleanedResponse);        // Try to parse the cleaned JSON
+        console.log("Cleaned Response:", cleanedResponse); // Try to parse the cleaned JSON
         const parsedResponse = JSON.parse(cleanedResponse);
         setTripData(parsedResponse);
         console.log("Parsed Trip Data:", parsedResponse);
-          // Save to Firebase
-        console.log("Saving trip to Firebase...");
+        // Save to Firebase        console.log("Saving trip to Firebase...");
         setSaveStatus("saving");
-        const saveResult = await saveTripToFirebase(parsedResponse);
-        if (saveResult && saveResult.success) {
+        const saveResult = await saveTripToFirebase(parsedResponse);        if (saveResult && saveResult.success) {
           setSaveStatus("success");
-          alert(`Trip generated and saved successfully! Firebase ID: ${saveResult.id}`);
+          setSavedTripId(saveResult.id); // Store the trip ID
           console.log("Trip saved to Firebase with ID:", saveResult.id);
+          
+          // Show success message briefly then navigate
+          alert(`Trip generated and saved successfully! Redirecting to trip view...`);
+          
+          // Navigate to view-trip page after a short delay
+          setTimeout(() => {
+            navigate(`/view-trip/${saveResult.id}`);
+          }, 1500);
         } else {
           setSaveStatus("error");
-          alert("Trip generated successfully, but failed to save to database. Check console for details.");
+          alert(
+            "Trip generated successfully, but failed to save to database. Check console for details."
+          );
           console.error("Firebase save failed:", saveResult?.error);
         }
       } catch (parseError) {
@@ -420,22 +434,30 @@ const CreateTrip = () => {
           const hotelMatch = responseText.match(/"hotels":\s*\[([\s\S]*?)\]/);
           const itineraryMatch = responseText.match(
             /"itinerary":\s*\[([\s\S]*?)\]/
-          );          if (hotelMatch || itineraryMatch) {
+          );
+          if (hotelMatch || itineraryMatch) {
             const fallbackData = {
               hotels: hotelMatch ? JSON.parse(`[${hotelMatch[1]}]`) : [],
               itinerary: itineraryMatch
                 ? JSON.parse(`[${itineraryMatch[1]}]`)
                 : [],
             };
-            setTripData(fallbackData);
-            
-            // Save fallback data to Firebase
+            setTripData(fallbackData);            // Save fallback data to Firebase
             console.log("Saving fallback trip data to Firebase...");
-            const saveResult = await saveTripToFirebase(fallbackData);
-            if (saveResult && saveResult.success) {
-              alert(`Trip generated with partial data and saved successfully! Firebase ID: ${saveResult.id}`);
+            const saveResult = await saveTripToFirebase(fallbackData);            if (saveResult && saveResult.success) {
+              setSavedTripId(saveResult.id); // Store the trip ID
+              alert(
+                `Trip generated with partial data and saved successfully! Redirecting to trip view...`
+              );
+              
+              // Navigate to view-trip page after a short delay
+              setTimeout(() => {
+                navigate(`/view-trip/${saveResult.id}`);
+              }, 1500);
             } else {
-              alert("Trip generated with partial data! Check console for details.");
+              alert(
+                "Trip generated with partial data! Check console for details."
+              );
               console.error("Firebase save failed:", saveResult?.error);
             }
           } else {
@@ -500,7 +522,8 @@ const CreateTrip = () => {
                 {import.meta.env.VITE_GOOGLE_PLACE_API_KEY
                   ? "✅ Present"
                   : "❌ Missing"}
-              </p>              <p>
+              </p>{" "}
+              <p>
                 Gemini API Key:{" "}
                 {import.meta.env.VITE_GEMINI_API_KEY
                   ? "✅ Present"
@@ -527,13 +550,16 @@ const CreateTrip = () => {
                 <strong>Database Status:</strong>
               </p>
               <p>
-                Last Save: {
-                  saveStatus === "saving" ? "🔄 Saving..." :
-                  saveStatus === "success" ? "✅ Success" :
-                  saveStatus === "error" ? "❌ Failed" :
-                  "➖ No attempts"
-                }
-              </p>            </div>
+                Last Save:{" "}
+                {saveStatus === "saving"
+                  ? "🔄 Saving..."
+                  : saveStatus === "success"
+                  ? "✅ Success"
+                  : saveStatus === "error"
+                  ? "❌ Failed"
+                  : "➖ No attempts"}
+              </p>{" "}
+            </div>
           </div>
           <div className="flex gap-2 mt-3">
             <Button
@@ -602,39 +628,59 @@ const CreateTrip = () => {
               </Button>
             </div>
           </div>
-        </div>      )}
-
+        </div>
+      )}
       {/* Database Status */}
       {saveStatus && (
-        <div className={`mb-4 p-3 rounded-lg border ${
-          saveStatus === "saving" ? "bg-blue-50 border-blue-200" :
-          saveStatus === "success" ? "bg-green-50 border-green-200" :
-          saveStatus === "error" ? "bg-red-50 border-red-200" :
-          "bg-gray-50 border-gray-200"
-        }`}>
+        <div
+          className={`mb-4 p-3 rounded-lg border ${
+            saveStatus === "saving"
+              ? "bg-blue-50 border-blue-200"
+              : saveStatus === "success"
+              ? "bg-green-50 border-green-200"
+              : saveStatus === "error"
+              ? "bg-red-50 border-red-200"
+              : "bg-gray-50 border-gray-200"
+          }`}
+        >
           <div className="flex items-center gap-2">
             {saveStatus === "saving" && (
               <>
                 <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-blue-700 font-medium">Saving trip to database...</span>
+                <span className="text-blue-700 font-medium">
+                  Saving trip to database...
+                </span>
               </>
-            )}
-            {saveStatus === "success" && (
-              <>
-                <span className="text-green-700 text-lg">✅</span>
-                <span className="text-green-700 font-medium">Trip saved to database successfully!</span>
-              </>
+            )}            {saveStatus === "success" && (
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <span className="text-green-700 text-lg">✅</span>
+                  <span className="text-green-700 font-medium">
+                    Trip saved to database successfully!
+                  </span>
+                </div>
+                {savedTripId && (
+                  <Button
+                    onClick={() => navigate(`/view-trip/${savedTripId}`)}
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    View Trip
+                  </Button>
+                )}
+              </div>
             )}
             {saveStatus === "error" && (
               <>
                 <span className="text-red-700 text-lg">❌</span>
-                <span className="text-red-700 font-medium">Failed to save trip to database</span>
+                <span className="text-red-700 font-medium">
+                  Failed to save trip to database
+                </span>
               </>
             )}
           </div>
         </div>
       )}
-
       <h2 className="font-bold text-black text-3xl">
         Tell us your Travel Preference
       </h2>

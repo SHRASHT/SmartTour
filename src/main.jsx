@@ -7,9 +7,9 @@ import App from "./App.jsx";
 import Header from "./components/custom/Header.jsx";
 import CreateTrip from "./create-trip/index.jsx";
 import Hero from "./components/custom/Hero.jsx";
-import FirebaseStatus from "./components/FirebaseStatus.jsx";
-import { Toaster } from "./components/ui/ui/sonner.jsx";
+import MyTrips from "./my-trips/index.jsx";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import ViewTrip from "./view-trip/[tripid]/index.jsx";
 
 // Define your routes
 const router = createBrowserRouter([
@@ -17,7 +17,6 @@ const router = createBrowserRouter([
     path: "/",
     element: (
       <>
-        <Header />
         <Hero />
         <App />
       </>
@@ -29,16 +28,24 @@ const router = createBrowserRouter([
       <>
         <Header />
         <CreateTrip />
-        <Toaster />
       </>
     ),
   },
   {
-    path: "/firebase-status",
+    path: "/view-trip/:tripid",
     element: (
       <>
         <Header />
-        <FirebaseStatus />
+        <ViewTrip />
+      </>
+    ),
+  },
+  {
+    path: "/my-trips",
+    element: (
+      <>
+        <Header />
+        <MyTrips />
       </>
     ),
   },
@@ -49,7 +56,6 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <RouterProvider router={router} />
-      <Toaster />
     </GoogleOAuthProvider>
   </StrictMode>
 );
