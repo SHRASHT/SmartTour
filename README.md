@@ -6,11 +6,11 @@
 ![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react)
 ![Firebase](https://img.shields.io/badge/Firebase-9.x-FFCA28?logo=firebase)
 ![AI](https://img.shields.io/badge/AI-Gemini-4285F4?logo=google)
-![License](https://img.shields.io/badge/License-MIT-green)
+
 
 **An intelligent travel planning application powered by AI that creates personalized itineraries in minutes.**
 
-[🚀 Live Demo](http://localhost:5173) · [📝 Report Bug](https://github.com/Shrasht/SecurityFirst1/issues) · [ Request Feature](https://github.com/Shrasht/SecurityFirst1/issues)
+· [📝 Report Bug](https://github.com/Shrasht/SmartTour/issues) · [ Request Feature](https://github.com/Shrasht/SmartTourissues)
 
 </div>
 
