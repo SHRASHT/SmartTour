@@ -102,7 +102,7 @@ SecurityFirst/
 └── package.json            # Dependencies and scripts
 ```
 
-## 🎯 Usage
+## Usage
 
 ### Creating a Trip
 
@@ -149,14 +149,14 @@ SecurityFirst/
 
 
 
-## 👨‍💻 Author
+##  Author
 
 **Shrasht**
 
 - GitHub: [@Shrasht](https://github.com/Shrasht)
 - Project Link: [SmartTour](https://github.com/Shrasht/SmartTour)
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - [React.js](https://reactjs.org/) for the amazing frontend framework
 - [Firebase](https://firebase.google.com/) for backend services
