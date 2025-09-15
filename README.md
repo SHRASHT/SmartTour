@@ -16,13 +16,13 @@
 
 ## ✨ Features
 
-- 🤖 **AI-Powered Planning** - Generate custom itineraries using Gemini AI
-- 🔐 **Secure Authentication** - Google OAuth integration for user management
-- 📱 **Responsive Design** - Seamless experience across all devices
-- 🗺️ **Smart Recommendations** - Google Places API for location data and suggestions
-- 💾 **Trip Management** - Save, edit, search, and organize your travel plans
-- 🎯 **Personalized Experience** - Budget-based recommendations and group size optimization
-- ⚡ **Real-time Updates** - Firebase integration for instant data synchronization
+-  **AI-Powered Planning** - Generate custom itineraries using Gemini AI
+- **Secure Authentication** - Google OAuth integration for user management
+- **Responsive Design** - Seamless experience across all devices
+- **Smart Recommendations** - Google Places API for location data and suggestions
+-  **Trip Management** - Save, edit, search, and organize your travel plans
+-  **Personalized Experience** - Budget-based recommendations and group size optimization
+-  **Real-time Updates** - Firebase integration for instant data synchronization
 
 ## 🛠️ Tech Stack
 
@@ -147,16 +147,14 @@ SecurityFirst/
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 👨‍💻 Author
 
 **Shrasht**
 
 - GitHub: [@Shrasht](https://github.com/Shrasht)
-- Project Link: [SecurityFirst1](https://github.com/Shrasht/SecurityFirst1)
+- Project Link: [SmartTour](https://github.com/Shrasht/SmartTour)
 
 ## 🙏 Acknowledgments
 
