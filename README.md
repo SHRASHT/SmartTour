@@ -1,2 +1,3 @@
 # SmartTour
-Safety app for travelling using ai
+Safety app for travelling using AI
+
