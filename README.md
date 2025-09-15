@@ -32,7 +32,7 @@
 | React Router | Firestore     | Google Places | CSS3              |
 | Vite         | Firebase Auth | Google OAuth  | Responsive Design |
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
