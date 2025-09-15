@@ -10,7 +10,7 @@
 
 **An intelligent travel planning application powered by AI that creates personalized itineraries in minutes.**
 
-[🚀 Live Demo](http://localhost:5173) · [📝 Report Bug](https://github.com/Shrasht/SecurityFirst1/issues) · [💡 Request Feature](https://github.com/Shrasht/SecurityFirst1/issues)
+[🚀 Live Demo](http://localhost:5173) · [📝 Report Bug](https://github.com/Shrasht/SecurityFirst1/issues) · [ Request Feature](https://github.com/Shrasht/SecurityFirst1/issues)
 
 </div>
 
